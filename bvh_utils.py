@@ -131,7 +131,8 @@ def load(filename, order=None):
         'offsets': offsets,
         'parents': parents,
         'names': names,
-        'order': order
+        'order': order,
+        'frame_time': frametime
     }
     
     

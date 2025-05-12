@@ -52,7 +52,7 @@ def create_cuboid(width = 1.0, height = 1.0, depth = 1.0, color = (1.0, 1.0, 1.0
     # 법선 벡터 계산
     normals = calculate_normals(vertices, indices)
     
-    return vertices, indices, colors, normals
+    return vertices, colors, normals, indices
 
 def create_sphere(radius = 1.0, segments = 16, rings = 16, color = (1.0, 1.0, 1.0)):
     """구 메시 데이터 생성"""
@@ -97,7 +97,7 @@ def create_sphere(radius = 1.0, segments = 16, rings = 16, color = (1.0, 1.0, 1.
     lengths = np.sqrt(np.sum(normals**2, axis=1))
     normals = normals / lengths[:, np.newaxis]
     
-    return vertices, indices, colors, normals
+    return vertices, colors, normals, indices
 
 def calculate_normals(vertices, indices):
     """삼각형 인덱스로부터 법선 벡터 계산"""

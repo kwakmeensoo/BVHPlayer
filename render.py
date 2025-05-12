@@ -12,14 +12,13 @@ class Renderer():
         self.background_color = (0.9, 0.9, 0.9)
 
         self.camera = Camera(
-            position = (0, 5, 5),
+            position = (8, 6, 8),
             target = (0, 0, 0),
             up = (0, 1, 0),
             aspect = width / height
         )
 
-        self.target_fps = 30
-        self.frame_time = 1.0 / self.target_fps
+        self.frame_time = 1 / 30
 
         self.controller = Controller(self.window, self.camera)
         
@@ -64,9 +63,8 @@ class Renderer():
         self.ctx.viewport = (0, 0, width, height)
         self.camera.aspect = width / height
 
-    def change_fps(self, fps):
-        self.target_fps = fps
-        self.frame_time = 1 / fps
+    def set_frame_time(self, frame_time):
+        self.frame_time = frame_time
 
     def run(self):
         try:
