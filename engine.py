@@ -34,11 +34,11 @@ class Engine:
         self.bvh_rotations = None
         self.bvh_order = None
 
-        self._init_bvh()
+        self.init_bvh()
 
     def update(self):
         if self.is_playing:
-            self.curr_frame = (self.curr_frame + 1) % self.num_frames
+            self.curr_frame = min(self.curr_frame + 1, self.num_frames - 1)
         
         if self.skeletons:
             self._update_skeletons(self.bvh_parents, self.bvh_positions[self.curr_frame], self.bvh_rotations[self.curr_frame], self.bvh_order)
@@ -75,7 +75,7 @@ class Engine:
     def _change_speed(self, speed):
         self.renderer.set_frame_time(self.frame_time / speed)
         
-    def _init_bvh(self, filename = 'test.bvh'):
+    def init_bvh(self, filename = 'test.bvh'):
         if self.skeletons:
             for skeleton in self.skeletons:
                 skeleton.cleanup()

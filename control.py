@@ -49,11 +49,9 @@ class Controller:
             if button == glfw.MOUSE_BUTTON_LEFT:
                 if action == glfw.PRESS:
                     self.mouse_pressed = True
-                    # 마우스 커서 숨기기
-                    glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+                    
                 elif action == glfw.RELEASE:
                     self.mouse_pressed = False
-                    glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_NORMAL)
                     self.first_mouse = True
     
     def cursor_pos_callback(self, window, xpos, ypos):
