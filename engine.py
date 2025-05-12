@@ -1,6 +1,7 @@
 import numpy as np
 import moderngl as mgl
 import glm
+import bvh_utils
 from geometry import *
 from objects import *
 
@@ -13,12 +14,12 @@ class Engine:
         
         self._init_shaders()
 
-        self.objects = [] # to cleanup
-
         self.checkboard = CheckerboardPlane(
             self.ctx, self.programs['checkerboard'], width = 100.0, depth = 100.0
         )
-        self.objects.append(self.checkboard)
+
+        self.skeletons = None
+        self._init_bvh()
 
     def update(self):
         # 1 frame update
@@ -35,14 +36,80 @@ class Engine:
             shader['view_pos'].write(view_pos)
         
         self.checkboard.render()
+        print('a')
+        if self.skeletons:
+            for skeleton in self.skeletons:
+                skeleton.render()
+                print('b')
     
     def cleanup(self):
         for shader in self.programs.values():
             shader.release()
 
-        for obj in self.objects:
-            obj.cleanup()
+        self.checkboard.cleanup()
+
+        if self.skeletons:
+            for skeleton in self.skeletons:
+                skeleton.cleanup()
         
+    def _init_bvh(self, filename = 'test.bvh'):
+        if self.skeletons:
+            for skeleton in self.skeletons:
+                skeleton.cleanup()
+        
+        self.skeletons = []
+        
+        bvh_data = bvh_utils.load(filename)
+        bvh_data['positions'] = bvh_data['positions'] / 100.0
+        self.renderer.set_frame_time(bvh_data['frame_time'])
+        self._init_skeletons(bvh_data['parents'], bvh_data['positions'][0], bvh_data['rotations'][0], bvh_data['order'])
+    
+    def _init_skeletons(self, parents, positions, rotations, order, color = (0.1, 0.1, 0.9)):
+        global_positions = []
+        global_rotations = []
+        for i, parent in enumerate(parents):
+            if parent == -1:
+                global_positions.append(glm.vec3(positions[i]))
+                global_rotations.append(self._quat_from_euler(rotations[i], order))
+            else:
+                par_pos = global_positions[parent]
+                par_quat = global_rotations[parent]
+                pos = par_pos + par_quat * glm.vec3(positions[i])
+                quat = par_quat * self._quat_from_euler(rotations[i], order)
+                global_positions.append(pos)
+                global_rotations.append(quat)
+
+                origin = (par_pos + pos) / 2
+                x_axis = glm.normalize(pos - par_pos)
+                z_axis = glm.normalize(glm.cross(x_axis, par_quat * glm.vec3(0, 1.0, 0)))
+                y_axis = glm.normalize(glm.cross(z_axis, x_axis))
+                model = glm.mat4(glm.vec4(x_axis, 0), glm.vec4(y_axis, 0), glm.vec4(z_axis, 0), glm.vec4(origin, 1.0))
+                
+                vertices, colors, normals, indices = create_cuboid(glm.length(pos - par_pos), 0.08, 0.08, color)
+                skeleton = PhongObject(self.ctx, self.programs['phong'], vertices, colors, normals, indices)
+                skeleton.update(model)
+                self.skeletons.append(skeleton)
+
+    def _update_skeletons(self, positions, rotations, order):
+        pass
+
+    def _quat_from_euler(self, angles, order):
+        rad_angles = [glm.radians(angle) for angle in angles]
+        
+        axis_map = {
+            'x': glm.vec3(1.0, 0.0, 0.0),
+            'y': glm.vec3(0.0, 1.0, 0.0),
+            'z': glm.vec3(0.0, 0.0, 1.0)
+        }
+
+        q = glm.quat()
+
+        for i, axis in enumerate(order):
+            axis_quat = glm.angleAxis(rad_angles[i], axis_map[axis])
+            q = q * axis_quat
+
+        return q
+            
 
     def _read_glsl_file(self, shader_path):
         with open(shader_path, 'r') as shader_file:
