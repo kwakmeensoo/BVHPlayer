@@ -76,7 +76,7 @@ class Renderer():
                 elapsed = curr_time - prev_time
                 prev_time = curr_time
 
-                lag = min(lag + elapsed, 0.25)
+                lag = lag + elapsed
 
                 glfw.poll_events()
                 self.controller.process_input(elapsed)
