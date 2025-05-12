@@ -18,15 +18,15 @@ class Controller:
     
     def _setup_callbacks(self):
         # 키보드 입력
-        glfw.set_key_callback(self.window, self._key_callback)
+        glfw.set_key_callback(self.window, self.key_callback)
         # 마우스 클릭
-        glfw.set_mouse_button_callback(self.window, self._mouse_button_callback)
+        glfw.set_mouse_button_callback(self.window, self.mouse_button_callback)
         # 마우스 이동
-        glfw.set_cursor_pos_callback(self.window, self._cursor_pos_callback)
+        glfw.set_cursor_pos_callback(self.window, self.cursor_pos_callback)
         # 마우스 스크롤
-        glfw.set_scroll_callback(self.window, self._scroll_callback)
+        glfw.set_scroll_callback(self.window, self.scroll_callback)
     
-    def _key_callback(self, window, key, scancode, action, mods):
+    def key_callback(self, window, key, scancode, action, mods):
         if action == glfw.PRESS:
             self.keys[key] = True
         elif action == glfw.RELEASE:
@@ -44,7 +44,7 @@ class Controller:
             else:
                 self.camera.set_mode(CameraMode.FREE)
     
-    def _mouse_button_callback(self, window, button, action, mods):
+    def mouse_button_callback(self, window, button, action, mods):
         if self.camera.mode == CameraMode.FREE:
             if button == glfw.MOUSE_BUTTON_LEFT:
                 if action == glfw.PRESS:
@@ -56,7 +56,7 @@ class Controller:
                     glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_NORMAL)
                     self.first_mouse = True
     
-    def _cursor_pos_callback(self, window, xpos, ypos):
+    def cursor_pos_callback(self, window, xpos, ypos):
         if not self.mouse_pressed or self.camera.mode != CameraMode.FREE:
             return
         
@@ -76,7 +76,7 @@ class Controller:
 
         self.camera.free_rotate(x_offset, y_offset)
     
-    def _scroll_callback(self, window, x_offset, y_offset):
+    def scroll_callback(self, window, x_offset, y_offset):
         self.camera.change_fov(y_offset)
     
     def process_input(self, dt):

@@ -3,6 +3,7 @@ import moderngl as mgl
 from camera import Camera, CameraMode
 from control import Controller
 from engine import Engine
+from ui import UI
 
 class Renderer():
     def __init__(self, width, height, title):
@@ -24,6 +25,8 @@ class Renderer():
         self.controller = Controller(self.window, self.camera)
         
         self.engine = Engine(self)
+
+        self.ui = UI(self.engine, self.controller)
 
     def _init_glfw(self, width, height, title, resizable = True, centered = True):
         if not glfw.init():
@@ -87,6 +90,7 @@ class Renderer():
                 
                 self.ctx.clear(*self.background_color)
                 self.engine.render()
+                self.ui.render()
                 glfw.swap_buffers(self.window)
         finally:
             self.cleanup()

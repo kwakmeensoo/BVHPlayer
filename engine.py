@@ -13,8 +13,6 @@ class Engine:
         self.window = self.renderer.window
         self.camera = self.renderer.camera
         self.ctx = self.renderer.ctx
-
-        self.ui = None
         
         self._init_shaders()
 
@@ -41,9 +39,10 @@ class Engine:
     def update(self):
         if self.is_playing:
             self.curr_frame = (self.curr_frame + 1) % self.num_frames
-
+        
+        if self.skeletons:
             self._update_skeletons(self.bvh_parents, self.bvh_positions[self.curr_frame], self.bvh_rotations[self.curr_frame], self.bvh_order)
-            
+                
             if self.camera.mode == CameraMode.ORBIT:
                 self.camera.set_target(self.bvh_positions[self.curr_frame][0])
 
