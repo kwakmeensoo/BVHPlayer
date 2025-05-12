@@ -13,6 +13,8 @@ class Engine:
         self.window = self.renderer.window
         self.camera = self.renderer.camera
         self.ctx = self.renderer.ctx
+
+        self.ui = None
         
         self._init_shaders()
 
@@ -25,8 +27,8 @@ class Engine:
         self.is_playing = False
 
         self.frame_time = None
-        self.curr_frame = None
-        self.num_frames = None
+        self.curr_frame = 0
+        self.num_frames = 1
         self.skeletons = None
 
         self.bvh_parents = None
@@ -35,7 +37,6 @@ class Engine:
         self.bvh_order = None
 
         self._init_bvh()
-        self.is_playing = True
 
     def update(self):
         if self.is_playing:
