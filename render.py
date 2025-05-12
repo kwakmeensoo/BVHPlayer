@@ -1,6 +1,6 @@
 import glfw
 import moderngl as mgl
-from camera import Camera
+from camera import Camera, CameraMode
 from control import Controller
 from engine import Engine
 
@@ -15,7 +15,8 @@ class Renderer():
             position = (8, 6, 8),
             target = (0, 0, 0),
             up = (0, 1, 0),
-            aspect = width / height
+            aspect = width / height,
+            mode = CameraMode.ORBIT
         )
 
         self.frame_time = 1 / 30
