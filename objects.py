@@ -4,7 +4,7 @@ import glm
 
 class PhongObject:
     def __init__(self, ctx: mgl.Context, program: mgl.Program,
-                 vertices: np.ndarray, colors: np.ndarray, indices: np.ndarray, normals: np.ndarray):
+                 vertices: np.ndarray, colors: np.ndarray, normals: np.ndarray, indices: np.ndarray):
         self.program = program
         self.v_buffer = ctx.buffer(vertices.astype('f4').tobytes())
         self.c_buffer = ctx.buffer(colors.astype('f4').tobytes())
