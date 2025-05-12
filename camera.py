@@ -65,11 +65,13 @@ class Camera:
         self._update_camera_vectors()
     
     def set_target(self, target):
+        if self.mode == CameraMode.FREE:
+            return
+        
         self.target = glm.vec3(target)
 
-        if self.mode == CameraMode.ORBIT:
-            # target을 따라 다니도록
-            self._update_from_orbit_params()
+        # target을 따라 다니도록
+        self._update_from_orbit_params()
         
         self._update_camera_vectors()
     
