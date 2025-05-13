@@ -1,7 +1,7 @@
 import imgui
 import glfw
 from imgui.integrations.glfw import GlfwRenderer
-
+from PyQt5.QtWidgets import QFileDialog
 class UI:
     def __init__(self, engine, controller):
         self.engine = engine
@@ -59,8 +59,10 @@ class UI:
         self.focused = imgui.is_window_focused(flags = imgui.FOCUS_CHILD_WINDOWS)
 
         if imgui.button('Open', width = 190):
-            # self._on_open_button()
-            pass
+            filename, _ = QFileDialog.getOpenFileName(None, '파일 선택', '', 'BVH Files (*.bvh)')
+            
+            if len(filename) > 0:
+                self.engine.init_bvh(filename)
 
         with imgui.begin_child('Frame Control Window', border = True, height = 83):
             imgui.push_style_var(imgui.STYLE_ITEM_SPACING, (4, 5))
