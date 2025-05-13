@@ -23,6 +23,7 @@ class Engine:
         self.skeleton_color = (0.1, 0.1, 0.9)
 
         self.is_playing = False
+        self.speed = 1.0
 
         self.frame_time = None
         self.curr_frame = 0
@@ -70,8 +71,8 @@ class Engine:
             for skeleton in self.skeletons:
                 skeleton.cleanup()
     
-    def _change_speed(self, speed):
-        self.renderer.set_frame_time(self.frame_time / speed)
+    def update_speed(self):
+        self.renderer.set_frame_time(self.frame_time / self.speed)
         
     def init_bvh(self, filename):
         if self.skeletons:
@@ -93,8 +94,8 @@ class Engine:
         self.curr_frame = 0
 
         self.is_playing = False
-
-        self._change_speed(1.0)
+        self.speed = 1.0
+        self.update_speed()
 
         self._init_skeletons(self.bvh_parents, self.bvh_positions[0], self.bvh_rotations[0], self.bvh_order)
 

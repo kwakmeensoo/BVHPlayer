@@ -69,7 +69,7 @@ class UI:
             if len(filename) > 0:
                 self.engine.init_bvh(filename)
 
-        with imgui.begin_child('Frame Control Window', border = True, height = 83):
+        with imgui.begin_child('Frame Control Window', border = True, height = 107):
             imgui.push_style_var(imgui.STYLE_ITEM_SPACING, (4, 5))
             imgui.columns(3, border = False)
             if imgui.button('Play', width = imgui.get_content_region_available_width()):
@@ -97,12 +97,26 @@ class UI:
             imgui.text('Frame:')
             imgui.same_line()
             imgui.set_next_item_width(imgui.get_content_region_available_width())
-            changed, value = imgui.slider_int(
-                '', self.engine.curr_frame + 1, 1, self.engine.num_frames
+            frame_changed, frame_value = imgui.slider_int(
+                '##frame', self.engine.curr_frame + 1, 1, self.engine.num_frames
             )
-            imgui.pop_style_var()
 
-            if changed:
-                self.engine.curr_frame = value - 1
+            if frame_changed:
+                self.engine.curr_frame = frame_value - 1
+
+            imgui.columns(1, border = False)
+            imgui.align_text_to_frame_padding()
+            imgui.text('Speed:')
+            imgui.same_line()
+            imgui.set_next_item_width(imgui.get_content_region_available_width())
+            speed_changed, speed_value = imgui.slider_float(
+                '##speed', self.engine.speed, 0.25 if self.engine.skeletons else 1.0 , 2.0 if self.engine.skeletons else 1.0, format = '%.2f'
+            )
+
+            if speed_changed:
+                self.engine.speed = speed_value
+                self.engine.update_speed()
+
+            imgui.pop_style_var()
         
         imgui.end()
