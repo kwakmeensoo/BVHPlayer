@@ -1,12 +1,12 @@
-import sys
 from render import Renderer
-from PyQt5.QtWidgets import QApplication
+import tkinter as tk
 
 if __name__ == '__main__':
     width = 1280
     height = 720
 
-    qt_app = QApplication(sys.argv)
+    tk_app = tk.Tk()
+    tk_app.withdraw()
 
     renderer = Renderer(width, height, "BVH Player")
 

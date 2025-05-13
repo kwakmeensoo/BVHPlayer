@@ -1,7 +1,8 @@
 import imgui
 import glfw
 from imgui.integrations.glfw import GlfwRenderer
-from PyQt5.QtWidgets import QFileDialog
+from tkinter import filedialog
+
 class UI:
     def __init__(self, engine, controller):
         self.engine = engine
@@ -59,8 +60,12 @@ class UI:
         self.focused = imgui.is_window_focused(flags = imgui.FOCUS_CHILD_WINDOWS)
 
         if imgui.button('Open', width = 190):
-            filename, _ = QFileDialog.getOpenFileName(None, '파일 선택', '', 'BVH Files (*.bvh)')
-            
+            filename = filedialog.askopenfilename(
+                title = '파일 선택',
+                filetypes = [('BVH Files', '*.bvh')],
+                initialdir = '.'
+            )
+
             if len(filename) > 0:
                 self.engine.init_bvh(filename)
 
