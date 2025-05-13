@@ -34,8 +34,6 @@ class Engine:
         self.bvh_rotations = None
         self.bvh_order = None
 
-        self.init_bvh()
-
     def update(self):
         if self.is_playing:
             self.curr_frame = min(self.curr_frame + 1, self.num_frames - 1)
@@ -75,7 +73,7 @@ class Engine:
     def _change_speed(self, speed):
         self.renderer.set_frame_time(self.frame_time / speed)
         
-    def init_bvh(self, filename = 'test.bvh'):
+    def init_bvh(self, filename):
         if self.skeletons:
             for skeleton in self.skeletons:
                 skeleton.cleanup()
@@ -171,7 +169,7 @@ class Engine:
             
 
     def _read_glsl_file(self, shader_path):
-        with open(shader_path, 'r') as shader_file:
+        with open(shader_path, 'r', encoding = 'utf-8') as shader_file:
             shader_code = shader_file.read()
             return shader_code
 
