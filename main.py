@@ -5,6 +5,7 @@ if __name__ == '__main__':
     width = 1280
     height = 720
 
+    # for filedialog
     tk_app = tk.Tk()
     tk_app.withdraw()
 
