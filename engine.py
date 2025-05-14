@@ -5,6 +5,7 @@ import bvh_utils
 from camera import Camera, CameraMode
 from geometry import *
 from objects import *
+from lbs import load_character
 
 class Engine:
     def __init__(self, renderer):
@@ -20,7 +21,7 @@ class Engine:
             self.ctx, self.programs['checkerboard'], width = 100.0, depth = 100.0
         )
 
-        self.skeleton_color = (0.1, 0.1, 0.9)
+        self.skeleton_color = (0.2, 0.2, 0.9)
 
         self.is_playing = False
         self.speed = 1.0
@@ -29,21 +30,30 @@ class Engine:
         self.curr_frame = 0
         self.num_frames = 1
         self.skeletons = None
+        self.character = None
 
         self.bvh_parents = None
         self.bvh_positions = None
         self.bvh_rotations = None
         self.bvh_order = None
+        self.global_positions: list[glm.vec3] = []
+        self.global_rotations: list[glm.quat] = []
 
     def update(self):
         if self.is_playing:
             self.curr_frame = min(self.curr_frame + 1, self.num_frames - 1)
         
+        if self.bvh_parents is not None:
+            self._forward_kinematics(self.bvh_parents, self.bvh_positions[self.curr_frame], self.bvh_rotations[self.curr_frame], self.bvh_order)
+
         if self.skeletons:
-            self._update_skeletons(self.bvh_parents, self.bvh_positions[self.curr_frame], self.bvh_rotations[self.curr_frame], self.bvh_order)
+            self._update_skeletons()
                 
             if self.camera.mode == CameraMode.ORBIT:
                 self.camera.set_target(self.bvh_positions[self.curr_frame][0])
+        
+        if self.character is not None:
+            self._update_character()
 
     def render(self):
         view_mat = self.renderer.camera.get_view_matrix()
@@ -60,6 +70,9 @@ class Engine:
         if self.skeletons:
             for skeleton in self.skeletons:
                 skeleton.render()
+
+        if self.character is not None:
+            self.character.render()
     
     def cleanup(self):
         for shader in self.programs.values():
@@ -70,6 +83,9 @@ class Engine:
         if self.skeletons:
             for skeleton in self.skeletons:
                 skeleton.cleanup()
+        
+        if self.character is not None:
+            self.character.cleanup()
     
     def update_speed(self):
         self.renderer.set_frame_time(self.frame_time / self.speed)
@@ -79,7 +95,11 @@ class Engine:
             for skeleton in self.skeletons:
                 skeleton.cleanup()
         
+        if self.character is not None:
+            self.character.cleanup()
+        
         self.skeletons = []
+        self.character = None
         
         bvh_data = bvh_utils.load(filename)
         # cm -> m
@@ -96,56 +116,72 @@ class Engine:
         self.is_playing = False
         self.speed = 1.0
         self.update_speed()
+        
+        self._forward_kinematics(self.bvh_parents, self.bvh_positions[0], self.bvh_rotations[0], self.bvh_order)
 
-        self._init_skeletons(self.bvh_parents, self.bvh_positions[0], self.bvh_rotations[0], self.bvh_order)
+        self._init_skeletons()
+        self._update_skeletons()
+
+        self._init_character('character.bin')
+        self._update_character()
+
+        translation_mat = glm.mat4(1.0)
+        translation_mat[3] = glm.vec4(2.5, 0.0, 0.0, 1.0)
+        self.character.update(model = translation_mat)
 
         if self.camera.mode == CameraMode.ORBIT:
             self.camera.set_target(self.bvh_positions[0][0])
     
-    def _init_skeletons(self, parents, positions, rotations, order):
-        global_positions = []
-        global_rotations = []
+    def _forward_kinematics(self, parents, positions, rotations, order):
+        self.global_positions = []
+        self.global_rotations = []
         for i, parent in enumerate(parents):
             if parent == -1:
-                global_positions.append(glm.vec3(positions[i]))
-                global_rotations.append(self._quat_from_euler(rotations[i], order))
+                self.global_positions.append(glm.vec3(positions[i]))
+                self.global_rotations.append(self._quat_from_euler(rotations[i], order))
             else:
-                par_pos = global_positions[parent]
-                par_quat = global_rotations[parent]
-                pos = par_pos + par_quat * glm.vec3(positions[i])
-                quat = par_quat * self._quat_from_euler(rotations[i], order)
-                global_positions.append(pos)
-                global_rotations.append(quat)
+                global_position = self.global_positions[parent] + self.global_rotations[parent] * glm.vec3(positions[i])
+                global_rotation = self.global_rotations[parent] * self._quat_from_euler(rotations[i], order)
+                self.global_positions.append(global_position)
+                self.global_rotations.append(global_rotation)
 
-                origin = (par_pos + pos) / 2
-                x_axis = glm.normalize(pos - par_pos)
-                z_axis = glm.normalize(glm.cross(x_axis, par_quat * glm.vec3(0, 1.0, 0)))
-                y_axis = glm.normalize(glm.cross(z_axis, x_axis))
-                model = glm.mat4(glm.vec4(x_axis, 0), glm.vec4(y_axis, 0), glm.vec4(z_axis, 0), glm.vec4(origin, 1.0))
+    def _init_character(self, filename):
+        character = load_character(filename)
+        self.character = LBSObject(self.ctx, self.programs['lbs'],
+                                   character['local_positions'], character['local_normals'], character['bone_weights'], character['bone_indices'], character['triangles'],
+                                   color = (0.9, 0.2, 0.2))
+    
+    def _init_skeletons(self):
+        for i, parent in enumerate(self.bvh_parents):
+            if parent != -1:
+                parent_position = self.global_positions[parent]
+                position = self.global_positions[i]
                 
-                vertices, colors, normals, indices = create_cuboid(glm.length(pos - par_pos), 0.08, 0.08, self.skeleton_color)
+                vertices, colors, normals, indices = create_cuboid(glm.length(position - parent_position), 0.08, 0.08, self.skeleton_color)
                 skeleton = PhongObject(self.ctx, self.programs['phong'], vertices, colors, normals, indices)
-                skeleton.update(model)
                 self.skeletons.append(skeleton)
 
-    def _update_skeletons(self, parents, positions, rotations, order):
-        global_positions = []
-        global_rotations = []
-        for i, parent in enumerate(parents):
-            if parent == -1:
-                global_positions.append(glm.vec3(positions[i]))
-                global_rotations.append(self._quat_from_euler(rotations[i], order))
-            else:
-                par_pos = global_positions[parent]
-                par_quat = global_rotations[parent]
-                pos = par_pos + par_quat * glm.vec3(positions[i])
-                quat = par_quat * self._quat_from_euler(rotations[i], order)
-                global_positions.append(pos)
-                global_rotations.append(quat)
+    def _update_character(self):
+        bone_matrices = []
 
-                origin = (par_pos + pos) / 2
-                x_axis = glm.normalize(pos - par_pos)
-                z_axis = glm.normalize(glm.cross(x_axis, par_quat * glm.vec3(0, 1.0, 0)))
+        for i, parent in enumerate(self.bvh_parents):
+            position = self.global_positions[i]
+            rotation = self.global_rotations[i]
+            bone_matrix = glm.mat4(rotation)
+            bone_matrix[3] = glm.vec4(position, 1.0)
+            bone_matrices.append(bone_matrix)
+
+        self.character.update(bone_matrices)
+
+    def _update_skeletons(self):
+        for i, parent in enumerate(self.bvh_parents):
+            if parent != -1:
+                parent_position = self.global_positions[parent]
+                parent_rotation = self.global_rotations[parent]
+                position = self.global_positions[i]
+                origin = (parent_position + position) / 2
+                x_axis = glm.normalize(position - parent_position)
+                z_axis = glm.normalize(glm.cross(x_axis, parent_rotation * glm.vec3(0, 1.0, 0)))
                 y_axis = glm.normalize(glm.cross(z_axis, x_axis))
                 model = glm.mat4(glm.vec4(x_axis, 0), glm.vec4(y_axis, 0), glm.vec4(z_axis, 0), glm.vec4(origin, 1.0))
                 
@@ -183,6 +219,10 @@ class Engine:
             'phong': self.ctx.program(
                 self._read_glsl_file('./shader/phong_vert_shader.glsl'),
                 self._read_glsl_file('./shader/phong_frag_shader.glsl')
+            ),
+            'lbs': self.ctx.program(
+                self._read_glsl_file('./shader/lbs_vert_shader.glsl'),
+                self._read_glsl_file('./shader/lbs_frag_shader.glsl')
             )
         }
 
