@@ -9,12 +9,12 @@ in vec3 frag_pos;
 out vec4 frag_color;
 
 // 광원 속성
-uniform vec3 light_pos = vec3(0.0, 10.0, 0.0);  // 기본 광원 위치
+uniform vec3 light_pos = vec3(5.0, 10.0, 5.0);  // 기본 광원 위치
 uniform vec3 light_color = vec3(1.0, 1.0, 1.0);  // 기본 광원 색상
 uniform vec3 view_pos;  // 카메라 위치
 
 // 재질 속성
-uniform float ambient_strength = 0.3;
+uniform float ambient_strength = 0.45;
 uniform float specular_strength = 0.5;
 uniform float shininess = 32.0;
 
